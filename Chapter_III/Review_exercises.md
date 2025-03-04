@@ -219,5 +219,52 @@ c. 超过窗口大小的部分无法发送；
 
 当删除传输中的ACK报文时，选择重传会记录下未收到ACK报文的下标（base值），等到重传时间后，从base发送所有未被确认的报文段；
 
+## 3.5
+
+### R14
+
+| 题目 | 判断 | 解析                                                         |
+| ---- | ---- | ------------------------------------------------------------ |
+| a    | ❌    | 即使B没有数据要发，B仍然要发送ACK确认报文。TCP是全双工的，确认和数据是独立的。 |
+| b    | ❌    | rwnd是接收窗口，会动态变化，受接收方缓存使用情况影响。       |
+| c    | ✅    | 发送未确认的数据量受到接收窗口的限制。                       |
+| d    | ❌    | 序号的增长取决于实际发送的数据长度，不一定是m+1，可能是m+数据长度。 |
+| e    | ❌    | TCP首部有`window`字段（表示接收窗口大小），但没有名为`rwnd`的字段，rwnd是概念上的。 |
+| f    | ✅    | TimeoutInterval是基于EstimatedRTT和DevRTT计算的，必定大于等于SampleRTT。 |
+| g    | ❌    | 确认号是对对方数据的确认，不是对自己发送数据的确认，和序号无直接关系。 |
+
+详细解释一下第f题：
+
+首先明确`TimeoutInterval`确实基于`EstimatedRTT`和`DevRTT`计算的，相关的计算公式如下所示
+
+> **EstimatedRTT** = (1 - α) * EstimatedRTT + α * SampleRTT
+>
+> **DevRTT** = (1 - β) * DevRTT + β * |SampleRTT - EstimatedRTT|
+>
+> **TimeoutInterval** = EstimatedRTT + 4 * DevRTT
+
+_**为什么TimeoutInterval一定大于等于SampleRTT？**_
+
+> - 即使网络非常稳定，`DevRTT`至少是0（这是理论极限），也就是说**TimeoutInterval = EstimatedRTT**。
+> - `EstimatedRTT`本身就是对SampleRTT的平滑估计，它不会比SampleRTT还低。
+> - 现实中，DevRTT基本上不会是0，意味着TimeoutInterval会比EstimatedRTT还要稍微大一些。
+
+### R15
+
+a. 20 字节；
+b. 90；
+注意，TCP序号是只针对数据的，不考虑其首部字节
+
+> **序号不考虑报头部分** 
+> **TCP序号编号的是 payload 中的每个字节**
+> **TCP序号只关心数据，不关心数据**
+
+### R16
+
+总共发送了两个报文段；
+假设之前的序号为`x`，则第一个报文段的序号为`x`，第二个报文段为`x + 1`；
+确认字段两次都是一样的——为什么？
+报文段的确认字段表示的是对端的确认，而对端B并未发送任何报文段，所以两次的确认字段是一致的；
+
 
 
